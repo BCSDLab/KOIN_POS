@@ -1,20 +1,31 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Logo from '../assets/Logo.svg'
-import TextInput from '../components/ui/TextInput'
-import Checkbox from '../components/ui/Checkbox'
-import Button from '../components/ui/Button'
+import { useState } from 'react';
+import Logo from '../assets/Logo.svg';
+import TextInput from '../components/ui/TextInput';
+import Checkbox from '../components/ui/Checkbox';
+import Button from '../components/ui/Button';
+import { usePostOwnerLogin } from '@renderer/apis/login/mutation';
+import { useNavigate } from 'react-router-dom';
+import { sha256 } from '@bcsdlab/utils';
 
 export default function LoginPage() {
-  const navigate = useNavigate()
-  const [phoneNumber, setPhoneNumber] = useState('01032898790')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [keepSignedIn, setKeepSignedIn] = useState(true)
+  const [account, setAccount] = useState('01032898790');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [keepSignedIn, setKeepSignedIn] = useState(true);
 
-  const handleSubmit = (): void => {
-    navigate('/stores')
-  }
+  const navigate = useNavigate();
+  const loginMutation = usePostOwnerLogin();
+  const handleSubmit = async (): Promise<void> => {
+    const hashedPassword = await sha256(password);
+    loginMutation.mutate(
+      { account, password: hashedPassword },
+      {
+        onSuccess: () => {
+          navigate('/stores');
+        }
+      }
+    );
+  };
 
   return (
     <div className="w-full h-screen flex items-center justify-center bg-[#FBFAFC]">
@@ -26,8 +37,8 @@ export default function LoginPage() {
         <div className="flex flex-col gap-3">
           <TextInput
             type="text"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            value={account}
+            onChange={(e) => setAccount(e.target.value)}
             placeholder="이메일"
           />
           <TextInput
@@ -52,5 +63,5 @@ export default function LoginPage() {
         </Button>
       </div>
     </div>
-  )
+  );
 }
