@@ -1,7 +1,7 @@
 interface StepperProps {
-  value: number
-  onChange?: (value: number) => void
-  min?: number
+  value: number;
+  onChange?: (value: number) => void;
+  min?: number;
 }
 
 export default function Stepper({ value, onChange, min = 1 }: StepperProps) {
@@ -23,5 +23,5 @@ export default function Stepper({ value, onChange, min = 1 }: StepperProps) {
         +
       </button>
     </div>
-  )
+  );
 }

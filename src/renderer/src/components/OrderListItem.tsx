@@ -1,11 +1,11 @@
-import Badge from './ui/Badge'
+import Badge from './ui/Badge';
 
 interface OrderListItemProps {
-  no: string
-  type: '배달' | '포장'
-  sub: string
-  selected: boolean
-  onClick?: () => void
+  no: string;
+  type: '배달' | '포장';
+  sub: string;
+  selected: boolean;
+  onClick?: () => void;
 }
 
 export default function OrderListItem({ no, type, sub, selected, onClick }: OrderListItemProps) {
@@ -27,5 +27,5 @@ export default function OrderListItem({ no, type, sub, selected, onClick }: Orde
         <div className="text-base text-text-secondary font-semibold">{sub}</div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,17 +1,17 @@
-import Button from './ui/Button'
+import Button from './ui/Button';
 
 interface FooterNote {
-  label: string
-  icon: string
-  tone: 'success' | 'muted'
+  label: string;
+  icon: string;
+  tone: 'success' | 'muted';
 }
 
 interface FooterBarProps {
-  secondary?: string
-  primary?: string
-  note?: FooterNote
-  onSecondary?: () => void
-  onPrimary?: () => void
+  secondary?: string;
+  primary?: string;
+  note?: FooterNote;
+  onSecondary?: () => void;
+  onPrimary?: () => void;
 }
 
 export default function FooterBar({
@@ -60,5 +60,5 @@ export default function FooterBar({
         </div>
       )}
     </div>
-  )
+  );
 }

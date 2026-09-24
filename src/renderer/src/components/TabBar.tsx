@@ -1,22 +1,22 @@
-import Badge from './ui/Badge'
+import Badge from './ui/Badge';
 
 interface TabBarItem {
-  key: string
-  label: string
-  count: number | null
+  key: string;
+  label: string;
+  count: number | null;
 }
 
 interface TabBarProps {
-  tabs: TabBarItem[]
-  activeKey: string
-  onChange: (key: string) => void
+  tabs: TabBarItem[];
+  activeKey: string;
+  onChange: (key: string) => void;
 }
 
 export default function TabBar({ tabs, activeKey, onChange }: TabBarProps) {
   return (
     <div className="flex gap-0.5 px-2.5 pt-3 border-b border-border">
       {tabs.map((tab) => {
-        const active = tab.key === activeKey
+        const active = tab.key === activeKey;
         return (
           <button
             key={tab.key}
@@ -34,8 +34,8 @@ export default function TabBar({ tabs, activeKey, onChange }: TabBarProps) {
               </Badge>
             )}
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

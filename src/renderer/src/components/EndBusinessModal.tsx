@@ -1,11 +1,11 @@
-import Logo from '../assets/Logo.svg'
-import Modal from './ui/Modal'
-import Button from './ui/Button'
+import Logo from '../assets/Logo.svg';
+import Modal from './ui/Modal';
+import Button from './ui/Button';
 
 interface EndBusinessModalProps {
-  open: boolean
-  onClose: () => void
-  onConfirm: () => void
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
 }
 
 export default function EndBusinessModal({ open, onClose, onConfirm }: EndBusinessModalProps) {
@@ -35,5 +35,5 @@ export default function EndBusinessModal({ open, onClose, onConfirm }: EndBusine
         </div>
       </div>
     </Modal>
-  )
+  );
 }

@@ -1,26 +1,26 @@
-import { useState } from 'react'
-import Modal from './ui/Modal'
-import RadioRow from './ui/RadioRow'
-import Button from './ui/Button'
+import { useState } from 'react';
+import Modal from './ui/Modal';
+import RadioRow from './ui/RadioRow';
+import Button from './ui/Button';
 
-const reasons = ['재료 소진', '배달 불가 지역', '기타 (직접 입력)']
+const reasons = ['재료 소진', '배달 불가 지역', '기타 (직접 입력)'];
 
 interface RejectModalProps {
-  open: boolean
-  onClose: () => void
-  onReject: (reason: string) => void
+  open: boolean;
+  onClose: () => void;
+  onReject: (reason: string) => void;
 }
 
 export default function RejectModal({ open, onClose, onReject }: RejectModalProps) {
-  const [selected, setSelected] = useState(reasons[0])
-  const [detail, setDetail] = useState('')
+  const [selected, setSelected] = useState(reasons[0]);
+  const [detail, setDetail] = useState('');
 
   return (
     <Modal open={open} onClose={onClose} className="w-115 p-6.5 flex flex-col gap-5">
       <div className="text-[21px] font-extrabold text-ink">반려 사유</div>
       <div className="flex flex-col gap-2.25">
         {reasons.map((reason) => {
-          const active = reason === selected
+          const active = reason === selected;
           return (
             <RadioRow
               key={reason}
@@ -41,7 +41,7 @@ export default function RejectModal({ open, onClose, onReject }: RejectModalProp
                 {reason}
               </span>
             </RadioRow>
-          )
+          );
         })}
         {selected === '기타 (직접 입력)' && (
           <textarea
@@ -69,5 +69,5 @@ export default function RejectModal({ open, onClose, onReject }: RejectModalProp
         </div>
       </div>
     </Modal>
-  )
+  );
 }

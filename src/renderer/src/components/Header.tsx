@@ -1,11 +1,11 @@
-import Logo from '../assets/Logo.svg'
-import Button from './ui/Button'
-import Badge from './ui/Badge'
+import Logo from '../assets/Logo.svg';
+import Button from './ui/Button';
+import Badge from './ui/Badge';
 
 interface HeaderProps {
-  storeName: string
-  onSettings?: () => void
-  onEndBusiness?: () => void
+  storeName: string;
+  onSettings?: () => void;
+  onEndBusiness?: () => void;
 }
 
 export default function Header({ storeName, onSettings, onEndBusiness }: HeaderProps) {
@@ -23,5 +23,5 @@ export default function Header({ storeName, onSettings, onEndBusiness }: HeaderP
         <Button onClick={onEndBusiness}>영업 종료</Button>
       </div>
     </div>
-  )
+  );
 }

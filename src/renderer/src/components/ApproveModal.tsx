@@ -1,24 +1,24 @@
-import { useState } from 'react'
-import Modal from './ui/Modal'
-import Button from './ui/Button'
+import { useState } from 'react';
+import Modal from './ui/Modal';
+import Button from './ui/Button';
 
-const presets = [10, 15, 20, 25, 30, 40, 45, 60]
+const presets = [10, 15, 20, 25, 30, 40, 45, 60];
 
 interface ApproveModalProps {
-  open: boolean
-  onClose: () => void
-  onApprove: (minutes: number) => void
+  open: boolean;
+  onClose: () => void;
+  onApprove: (minutes: number) => void;
 }
 
 export default function ApproveModal({ open, onClose, onApprove }: ApproveModalProps) {
-  const [minutes, setMinutes] = useState(20)
+  const [minutes, setMinutes] = useState(20);
 
   return (
     <Modal open={open} onClose={onClose} className="w-115 p-6.5 flex flex-col gap-5">
       <div className="text-[21px] font-extrabold text-ink">예상 도착 시간</div>
       <div className="grid grid-cols-4 gap-2.25">
         {presets.map((m) => {
-          const active = m === minutes
+          const active = m === minutes;
           return (
             <button
               key={m}
@@ -31,7 +31,7 @@ export default function ApproveModal({ open, onClose, onApprove }: ApproveModalP
             >
               {m}분
             </button>
-          )
+          );
         })}
       </div>
       <div className="bg-surface border border-primary-subtle rounded-[11px] px-4 py-3.5 flex items-center justify-between">
@@ -49,5 +49,5 @@ export default function ApproveModal({ open, onClose, onApprove }: ApproveModalP
         </div>
       </div>
     </Modal>
-  )
+  );
 }

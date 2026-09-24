@@ -5,21 +5,21 @@ import {
   OrderReceiver,
   OrderStatusCounts,
   OrderTab
-} from '../types/order'
+} from '../types/order';
 
 export const orderTabs: OrderTab[] = [
   { key: 'new', label: '신규', statuses: ['CONFIRMING'] },
   { key: 'cooking', label: '조리중', statuses: ['COOKING'] },
   { key: 'delivering', label: '전달중', statuses: ['DELIVERING', 'PACKAGED'] },
   { key: 'done', label: '완료', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELED'] }
-]
+];
 
 export const mockOrderStatusCounts: OrderStatusCounts = {
   new_count: 3,
   cooking_count: 2,
   delivering_count: 1,
   completed_count: 12
-}
+};
 
 const defaultMenus: OrderMenu[] = [
   {
@@ -40,7 +40,7 @@ const defaultMenus: OrderMenu[] = [
     quantity: 1,
     options: []
   }
-]
+];
 
 const defaultReceiver: OrderReceiver = {
   name: '김민수',
@@ -50,13 +50,13 @@ const defaultReceiver: OrderReceiver = {
   to_owner: '젓가락 2개 부탁드립니다',
   to_rider: '문 앞에 놔주세요',
   provide_cutlery: true
-}
+};
 
 function buildPayment(menus: OrderMenu[], deliveryTip: number, discount = 0): OrderPayment {
   const totalProductPrice = menus.reduce((sum, menu) => {
-    const optionsTotal = menu.options.reduce((s, o) => s + o.option_price * o.quantity, 0)
-    return sum + menu.menu_price * menu.quantity + optionsTotal
-  }, 0)
+    const optionsTotal = menu.options.reduce((s, o) => s + o.option_price * o.quantity, 0);
+    return sum + menu.menu_price * menu.quantity + optionsTotal;
+  }, 0);
 
   return {
     method: 'CARD',
@@ -65,29 +65,29 @@ function buildPayment(menus: OrderMenu[], deliveryTip: number, discount = 0): Or
     delivery_tip: deliveryTip,
     discount_amount: discount,
     total_price: totalProductPrice + deliveryTip - discount
-  }
+  };
 }
 
 function iso(hour: number, minute: number): string {
-  return new Date(2026, 8, 23, hour, minute).toISOString()
+  return new Date(2026, 8, 23, hour, minute).toISOString();
 }
 
 interface MockOrderInput {
-  id: number
-  order_number: string
-  order_type: Order['order_type']
-  order_status: Order['order_status']
-  orderedAt: [number, number]
-  completedAt?: [number, number]
-  canceledAt?: [number, number]
-  canceledReason?: string
+  id: number;
+  order_number: string;
+  order_type: Order['order_type'];
+  order_status: Order['order_status'];
+  orderedAt: [number, number];
+  completedAt?: [number, number];
+  canceledAt?: [number, number];
+  canceledReason?: string;
 }
 
 function buildOrder(input: MockOrderInput): Order {
-  const menus = defaultMenus
-  const deliveryTip = input.order_type === 'DELIVERY' ? 3000 : 0
-  const payment = buildPayment(menus, deliveryTip)
-  const orderedAt = iso(...input.orderedAt)
+  const menus = defaultMenus;
+  const deliveryTip = input.order_type === 'DELIVERY' ? 3000 : 0;
+  const payment = buildPayment(menus, deliveryTip);
+  const orderedAt = iso(...input.orderedAt);
 
   return {
     id: input.id,
@@ -101,7 +101,7 @@ function buildOrder(input: MockOrderInput): Order {
     completed_at: input.completedAt ? iso(...input.completedAt) : null,
     canceled_at: input.canceledAt ? iso(...input.canceledAt) : null,
     canceled_reason: input.canceledReason ?? null
-  }
+  };
 }
 
 export const mockOrderList: Order[] = [
@@ -179,4 +179,4 @@ export const mockOrderList: Order[] = [
     canceledAt: [17, 58],
     canceledReason: '재료 소진'
   })
-]
+];

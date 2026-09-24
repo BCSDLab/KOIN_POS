@@ -1,21 +1,21 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Modal from './ui/Modal'
-import Toggle from './ui/Toggle'
-import Stepper from './ui/Stepper'
-import Button from './ui/Button'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Modal from './ui/Modal';
+import Toggle from './ui/Toggle';
+import Stepper from './ui/Stepper';
+import Button from './ui/Button';
 
 interface SettingsModalProps {
-  open: boolean
-  onClose: () => void
-  storeName: string
+  open: boolean;
+  onClose: () => void;
+  storeName: string;
 }
 
 export default function SettingsModal({ open, onClose, storeName }: SettingsModalProps) {
-  const navigate = useNavigate()
-  const [autoPrint, setAutoPrint] = useState(true)
-  const [printCount, setPrintCount] = useState(1)
-  const [soundAlert, setSoundAlert] = useState(true)
+  const navigate = useNavigate();
+  const [autoPrint, setAutoPrint] = useState(true);
+  const [printCount, setPrintCount] = useState(1);
+  const [soundAlert, setSoundAlert] = useState(true);
 
   return (
     <Modal open={open} onClose={onClose} className="w-150 flex flex-col">
@@ -85,5 +85,5 @@ export default function SettingsModal({ open, onClose, storeName }: SettingsModa
         </Button>
       </div>
     </Modal>
-  )
+  );
 }

@@ -1,7 +1,7 @@
-import { InputHTMLAttributes } from 'react'
+import { InputHTMLAttributes } from 'react';
 
 interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  rightSlot?: React.ReactNode
+  rightSlot?: React.ReactNode;
 }
 
 export default function TextInput({ rightSlot, ...rest }: TextInputProps) {
@@ -10,5 +10,5 @@ export default function TextInput({ rightSlot, ...rest }: TextInputProps) {
       <input className="flex-1 min-w-0 text-base text-ink outline-none bg-transparent" {...rest} />
       {rightSlot}
     </div>
-  )
+  );
 }

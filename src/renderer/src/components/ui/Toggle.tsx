@@ -1,6 +1,6 @@
 interface ToggleProps {
-  checked: boolean
-  onChange?: (checked: boolean) => void
+  checked: boolean;
+  onChange?: (checked: boolean) => void;
 }
 
 export default function Toggle({ checked, onChange }: ToggleProps) {
@@ -16,5 +16,5 @@ export default function Toggle({ checked, onChange }: ToggleProps) {
     >
       <span className="w-6 h-6 rounded-full bg-white" />
     </button>
-  )
+  );
 }

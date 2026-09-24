@@ -1,6 +1,6 @@
 interface SectionHeaderProps {
-  label: string
-  count: number
+  label: string;
+  count: number;
 }
 
 export default function SectionHeader({ label, count }: SectionHeaderProps) {
@@ -9,5 +9,5 @@ export default function SectionHeader({ label, count }: SectionHeaderProps) {
       <span className="text-base font-extrabold text-text-secondary tracking-wide">{label}</span>
       <span className="text-[15px] font-bold text-text-tertiary tabular-nums">{count}건</span>
     </div>
-  )
+  );
 }

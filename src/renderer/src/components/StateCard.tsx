@@ -1,13 +1,13 @@
-import Logo from '../assets/Logo.svg'
-import Button from './ui/Button'
+import Logo from '../assets/Logo.svg';
+import Button from './ui/Button';
 
 interface StateCardProps {
-  status: 'empty' | 'loading' | 'error'
-  onRetry?: () => void
+  status: 'empty' | 'loading' | 'error';
+  onRetry?: () => void;
 }
 
 const shell =
-  'w-95 h-85 bg-white border border-border rounded-2xl shadow-[0_20px_50px_rgba(70,20,100,0.1)]'
+  'w-95 h-85 bg-white border border-border rounded-2xl shadow-[0_20px_50px_rgba(70,20,100,0.1)]';
 
 export default function StateCard({ status, onRetry }: StateCardProps) {
   if (status === 'loading') {
@@ -18,7 +18,7 @@ export default function StateCard({ status, onRetry }: StateCardProps) {
           <div key={i} className="h-17.5 rounded-xl bg-[#F5EEFA] animate-pulse" />
         ))}
       </div>
-    )
+    );
   }
 
   if (status === 'error') {
@@ -39,7 +39,7 @@ export default function StateCard({ status, onRetry }: StateCardProps) {
           다시 시도
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -53,5 +53,5 @@ export default function StateCard({ status, onRetry }: StateCardProps) {
         <br />이 목록에 바로 나타납니다.
       </div>
     </div>
-  )
+  );
 }

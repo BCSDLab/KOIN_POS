@@ -1,12 +1,12 @@
 interface ModalProps {
-  open: boolean
-  onClose: () => void
-  children: React.ReactNode
-  className?: string
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  className?: string;
 }
 
 export default function Modal({ open, onClose, children, className = '' }: ModalProps) {
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <div
@@ -20,5 +20,5 @@ export default function Modal({ open, onClose, children, className = '' }: Modal
         {children}
       </div>
     </div>
-  )
+  );
 }

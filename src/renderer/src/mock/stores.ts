@@ -1,4 +1,4 @@
-import { Store } from '../types/order'
+import { Store } from '../types/order';
 
 export const stores: Store[] = [
   {
@@ -9,4 +9,4 @@ export const stores: Store[] = [
   },
   { id: 'dujeong', name: '한끼반점 두정점', address: '천안시 서북구 두정로 77', open: true },
   { id: 'buldang', name: '한끼반점 불당점', address: '천안시 서북구 불당25로 100', open: false }
-]
+];
