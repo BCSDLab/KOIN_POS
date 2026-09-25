@@ -50,6 +50,8 @@ export default function DashboardPage() {
   const seenNewOrderIdsRef = useRef<Set<number> | null>(null);
 
   useEffect(() => {
+    if (newOrdersRes.data === undefined) return;
+
     const currentOrders = newOrdersRes.data?.orders ?? [];
     const currentIds = new Set(currentOrders.map((o) => o.id));
     const seenIds = seenNewOrderIdsRef.current;
