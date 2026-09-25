@@ -12,6 +12,7 @@ import EndBusinessModal from '../components/EndBusinessModal';
 import { useGetOrderCount, useGetOrderDetail, useGetOrderList } from '@renderer/apis/order/queries';
 import { usePatchOrderStatus, usePatchStoreStatus } from '@renderer/apis/order/mutation';
 import type { ORDER_STATUS, ORDER_TYPE, OrderList } from '@renderer/apis/order/entity';
+import { useGetOwnerShops } from '@renderer/apis/store/queries';
 import { formatTime } from '../lib/format';
 
 type TabKey = 'new' | 'cooking' | 'delivering' | 'done';
@@ -60,7 +61,7 @@ function nextStatusForTab(tabKey: TabKey, orderType: ORDER_TYPE): ORDER_STATUS |
   return null;
 }
 
-const STORE_NAME = '한끼반점 신전점';
+type ModalType = 'Approve' | 'Reject' | 'Setting' | 'EndBusiness' | null;
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -69,11 +70,12 @@ export default function DashboardPage() {
 
   const [activeTab, setActiveTab] = useState<TabKey>('new');
   const [manualSelectedId, setManualSelectedId] = useState<number | null>(null);
-  const [approveOpen, setApproveOpen] = useState(false);
-  const [rejectOpen, setRejectOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [endBusinessOpen, setEndBusinessOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<ModalType>(null);
 
+  const ownerShops = useGetOwnerShops();
+  const currentShop = ownerShops.data?.shops.find(
+    (shop) => shop.orderable_shop_id === orderableShopId
+  );
   const orderListRes = useGetOrderList(orderableShopId, statusKey[activeTab]);
   const orderList = orderListRes.data?.orders ?? [];
   const deliveryRows = orderList.filter((o) => o.order_type === 'DELIVERY');
@@ -127,7 +129,7 @@ export default function DashboardPage() {
   const handleFooterPrimary = (): void => {
     if (!order) return;
     if (activeTab === 'new') {
-      setApproveOpen(true);
+      setIsModalOpen('Approve');
       return;
     }
     const next = nextStatusForTab(activeTab, order.order_type);
@@ -142,9 +144,9 @@ export default function DashboardPage() {
   return (
     <div className="w-full h-screen flex flex-col bg-[#FBFAFC]">
       <Header
-        storeName={STORE_NAME}
-        onSettings={() => setSettingsOpen(true)}
-        onEndBusiness={() => setEndBusinessOpen(true)}
+        storeName={currentShop?.name}
+        onSettings={() => setIsModalOpen('Setting')}
+        onEndBusiness={() => setIsModalOpen('EndBusiness')}
       />
 
       <div className="flex-1 flex min-h-0">
@@ -196,7 +198,7 @@ export default function DashboardPage() {
             footerSecondary={footerSecondary}
             footerPrimary={footerPrimary}
             footerNote={footerNote}
-            onFooterSecondary={() => setRejectOpen(true)}
+            onFooterSecondary={() => setIsModalOpen('Reject')}
             onFooterPrimary={handleFooterPrimary}
           />
         ) : (
@@ -205,37 +207,37 @@ export default function DashboardPage() {
       </div>
 
       <ApproveModal
-        open={approveOpen}
-        onClose={() => setApproveOpen(false)}
+        open={isModalOpen === 'Approve'}
+        onClose={() => setIsModalOpen(null)}
         onApprove={(minutes) => {
           if (!order) return;
           patchOrderStatus.mutate({
             orderId: order.id,
             request: { status: 'COOKING', estimated_minutes: minutes, canceled_reason: null }
           });
-          setApproveOpen(false);
+          setIsModalOpen(null);
         }}
       />
       <RejectModal
-        open={rejectOpen}
-        onClose={() => setRejectOpen(false)}
+        open={isModalOpen === 'Reject'}
+        onClose={() => setIsModalOpen(null)}
         onReject={(reason) => {
           if (!order) return;
           patchOrderStatus.mutate({
             orderId: order.id,
             request: { status: 'CANCELED', estimated_minutes: null, canceled_reason: reason }
           });
-          setRejectOpen(false);
+          setIsModalOpen(null);
         }}
       />
       <SettingsModal
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        storeName={STORE_NAME}
+        open={isModalOpen === 'Setting'}
+        onClose={() => setIsModalOpen(null)}
+        storeName={currentShop?.name}
       />
       <EndBusinessModal
-        open={endBusinessOpen}
-        onClose={() => setEndBusinessOpen(false)}
+        open={isModalOpen === 'EndBusiness'}
+        onClose={() => setIsModalOpen(null)}
         onConfirm={() => {
           patchStoreStatus.mutate({ is_open: false });
           navigate('/stores');

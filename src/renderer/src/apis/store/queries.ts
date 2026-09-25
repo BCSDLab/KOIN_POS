@@ -3,7 +3,7 @@ import { getOwnerShops } from './client';
 
 export const useGetOwnerShops = () => {
   return useQuery({
-    queryKey: ['shop', 'owner'],
+    queryKey: ['owner', 'shops'],
     queryFn: () => getOwnerShops()
   });
 };

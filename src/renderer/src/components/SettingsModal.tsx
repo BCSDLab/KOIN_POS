@@ -8,10 +8,14 @@ import Button from './ui/Button';
 interface SettingsModalProps {
   open: boolean;
   onClose: () => void;
-  storeName: string;
+  storeName: string | undefined;
 }
 
-export default function SettingsModal({ open, onClose, storeName }: SettingsModalProps) {
+export default function SettingsModal({
+  open,
+  onClose,
+  storeName = '코인 사장님'
+}: SettingsModalProps) {
   const navigate = useNavigate();
   const [autoPrint, setAutoPrint] = useState(true);
   const [printCount, setPrintCount] = useState(1);

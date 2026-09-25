@@ -4,6 +4,7 @@ import RadioRow from '../components/ui/RadioRow';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import { useGetOwnerShops } from '@renderer/apis/store/queries';
+import { usePatchStoreStatus } from '@renderer/apis/order/mutation';
 
 export default function StoreSelectPage() {
   const res = useGetOwnerShops();
@@ -11,6 +12,7 @@ export default function StoreSelectPage() {
   const navigate = useNavigate();
   const [manualSelectedId, setManualSelectedId] = useState<number | undefined>(undefined);
   const selectedId = manualSelectedId ?? shopList[0]?.orderable_shop_id;
+  const storeStatus = usePatchStoreStatus(selectedId);
 
   return (
     <div className="w-full h-screen flex items-center justify-center bg-[#FBFAFC] relative">
@@ -61,7 +63,12 @@ export default function StoreSelectPage() {
           variant="primary"
           size="md"
           fullWidth
-          onClick={() => navigate(`/dashboard?shopId=${selectedId}`)}
+          onClick={() => {
+            storeStatus.mutate({
+              is_open: true
+            });
+            navigate(`/dashboard?shopId=${selectedId}`);
+          }}
         >
           매장 선택
         </Button>
