@@ -5,61 +5,24 @@ import TabBar from '../components/TabBar';
 import SectionHeader from '../components/SectionHeader';
 import OrderListItem from '../components/OrderListItem';
 import OrderDetail from '../components/OrderDetail';
+import QueryStateGate from '../components/QueryStateGate';
 import ApproveModal from '../components/ApproveModal';
 import RejectModal from '../components/RejectModal';
 import SettingsModal from '../components/SettingsModal';
 import EndBusinessModal from '../components/EndBusinessModal';
 import { useGetOrderCount, useGetOrderDetail, useGetOrderList } from '@renderer/apis/order/queries';
 import { usePatchOrderStatus, usePatchStoreStatus } from '@renderer/apis/order/mutation';
-import type { ORDER_STATUS, ORDER_TYPE, OrderList } from '@renderer/apis/order/entity';
 import { useGetOwnerShops } from '@renderer/apis/store/queries';
-import { formatTime } from '../lib/format';
-
-type TabKey = 'new' | 'cooking' | 'delivering' | 'done';
-type ServerStatus = 'NEW' | 'COOKING' | 'DELIVERING' | 'COMPLETED';
-
-const tabs: { key: TabKey; label: string }[] = [
-  { key: 'new', label: '신규' },
-  { key: 'cooking', label: '조리중' },
-  { key: 'delivering', label: '전달중' },
-  { key: 'done', label: '완료' }
-];
-
-const statusKey: Record<TabKey, ServerStatus> = {
-  new: 'NEW',
-  cooking: 'COOKING',
-  delivering: 'DELIVERING',
-  done: 'COMPLETED'
-};
-
-const countKey: Record<TabKey, 'new_count' | 'cooking_count' | 'delivering_count' | null> = {
-  new: 'new_count',
-  cooking: 'cooking_count',
-  delivering: 'delivering_count',
-  done: null
-};
-
-function sectionLabel(tabKey: TabKey, type: ORDER_TYPE): string {
-  if (tabKey === 'delivering') {
-    return type === 'DELIVERY' ? '배달중' : '포장완료 · 수령 대기';
-  }
-  return type === 'DELIVERY' ? '배달' : '포장';
-}
-
-function rowSubLabel(order: OrderList): string {
-  if (order.order_status === 'CANCELED') return '반려';
-  if (order.order_status === 'DELIVERED') return `${formatTime(order.estimated_at)} 배달 완료`;
-  if (order.order_status === 'PICKED_UP') return `${formatTime(order.estimated_at)} 포장 수령 완료`;
-  if (order.order_status === 'CONFIRMING') return `${formatTime(order.ordered_at)} 접수`;
-  return `${formatTime(order.estimated_at)} 완료 예정`;
-}
-
-// 조리 완료 / 배달·포장 완료처럼 모달 없이 바로 다음 상태로 넘어가는 전이
-function nextStatusForTab(tabKey: TabKey, orderType: ORDER_TYPE): ORDER_STATUS | null {
-  if (tabKey === 'cooking') return orderType === 'DELIVERY' ? 'DELIVERING' : 'PACKAGED';
-  if (tabKey === 'delivering') return orderType === 'DELIVERY' ? 'DELIVERED' : 'PICKED_UP';
-  return null;
-}
+import {
+  tabs,
+  statusKey,
+  countKey,
+  sectionLabel,
+  rowSubLabel,
+  nextStatusForTab,
+  footerNoteForOrder
+} from '../lib/dashboard';
+import type { TabKey } from '../lib/dashboard';
 
 type ModalType = 'Approve' | 'Reject' | 'Setting' | 'EndBusiness' | null;
 
@@ -78,6 +41,7 @@ export default function DashboardPage() {
   );
   const orderListRes = useGetOrderList(orderableShopId, statusKey[activeTab]);
   const orderList = orderListRes.data?.orders ?? [];
+  const isOrderListOffline = orderListRes.fetchStatus === 'paused';
   const deliveryRows = orderList.filter((o) => o.order_type === 'DELIVERY');
   const takeoutRows = orderList.filter((o) => o.order_type === 'TAKE_OUT');
 
@@ -87,6 +51,7 @@ export default function DashboardPage() {
   const selectedId = manualSelectedId ?? orderList[0]?.id ?? null;
   const orderDetailRes = useGetOrderDetail(orderableShopId, selectedId);
   const order = orderDetailRes.data;
+  const isOrderDetailOffline = orderDetailRes.fetchStatus === 'paused';
 
   const patchOrderStatus = usePatchOrderStatus(orderableShopId);
   const patchStoreStatus = usePatchStoreStatus(orderableShopId);
@@ -101,30 +66,21 @@ export default function DashboardPage() {
     count: countKey[tab.key] && counts ? counts[countKey[tab.key]!] : null
   }));
 
-  const isRejected = order?.order_status === 'CANCELED';
-
-  const footerNote =
-    activeTab === 'done' && order
-      ? isRejected
-        ? { label: '반려된 주문입니다', icon: '✕', tone: 'muted' as const }
-        : {
-            label: `${order.order_status === 'DELIVERED' ? '배달' : '포장 수령'} 완료된 주문입니다`,
-            icon: '✓',
-            tone: 'success' as const
-          }
-      : undefined;
+  const footerNote = activeTab === 'done' && order ? footerNoteForOrder(order) : undefined;
 
   const footerSecondary = activeTab === 'new' ? '주문 반려' : undefined;
+
+  const footerPrimaryLabel: Partial<Record<TabKey, string>> = {
+    new: '주문 승인',
+    cooking: '조리 완료'
+  };
+
   const footerPrimary =
-    activeTab === 'new'
-      ? '주문 승인'
-      : activeTab === 'cooking'
-        ? '조리 완료'
-        : activeTab === 'delivering' && order
-          ? order.order_type === 'DELIVERY'
-            ? '배달 완료'
-            : '포장 수령 완료'
-          : undefined;
+    activeTab === 'delivering' && order
+      ? order.order_type === 'DELIVERY'
+        ? '배달 완료'
+        : '포장 수령 완료'
+      : footerPrimaryLabel[activeTab];
 
   const handleFooterPrimary = (): void => {
     if (!order) return;
@@ -153,57 +109,77 @@ export default function DashboardPage() {
         <div className="w-117.5 bg-white border-r border-border flex flex-col min-h-0 flex-none">
           <TabBar tabs={tabsWithCount} activeKey={activeTab} onChange={handleTabChange} />
           <div className="flex-1 overflow-y-auto">
-            {deliveryRows.length > 0 && (
-              <div>
-                <SectionHeader
-                  label={sectionLabel(activeTab, 'DELIVERY')}
-                  count={deliveryRows.length}
-                />
-                {deliveryRows.map((row) => (
-                  <OrderListItem
-                    key={row.id}
-                    no={row.order_number}
-                    type={row.order_type === 'DELIVERY' ? '배달' : '포장'}
-                    sub={rowSubLabel(row)}
-                    selected={row.id === selectedId}
-                    onClick={() => setManualSelectedId(row.id)}
+            <QueryStateGate
+              isPending={orderListRes.isPending}
+              isError={orderListRes.isError}
+              isOffline={isOrderListOffline}
+              length={orderList.length}
+              errorMessage={orderListRes.error?.message}
+              onRetry={() => orderListRes.refetch()}
+            >
+              {deliveryRows.length > 0 && (
+                <div>
+                  <SectionHeader
+                    label={sectionLabel(activeTab, 'DELIVERY')}
+                    count={deliveryRows.length}
                   />
-                ))}
-              </div>
-            )}
-            {takeoutRows.length > 0 && (
-              <div>
-                <SectionHeader
-                  label={sectionLabel(activeTab, 'TAKE_OUT')}
-                  count={takeoutRows.length}
-                />
-                {takeoutRows.map((row) => (
-                  <OrderListItem
-                    key={row.id}
-                    no={row.order_number}
-                    type={row.order_type === 'DELIVERY' ? '배달' : '포장'}
-                    sub={rowSubLabel(row)}
-                    selected={row.id === selectedId}
-                    onClick={() => setManualSelectedId(row.id)}
+                  {deliveryRows.map((row) => (
+                    <OrderListItem
+                      key={row.id}
+                      no={row.order_number}
+                      type={row.order_type === 'DELIVERY' ? '배달' : '포장'}
+                      sub={rowSubLabel(row)}
+                      selected={row.id === selectedId}
+                      onClick={() => setManualSelectedId(row.id)}
+                    />
+                  ))}
+                </div>
+              )}
+              {takeoutRows.length > 0 && (
+                <div>
+                  <SectionHeader
+                    label={sectionLabel(activeTab, 'TAKE_OUT')}
+                    count={takeoutRows.length}
                   />
-                ))}
-              </div>
-            )}
+                  {takeoutRows.map((row) => (
+                    <OrderListItem
+                      key={row.id}
+                      no={row.order_number}
+                      type={row.order_type === 'DELIVERY' ? '배달' : '포장'}
+                      sub={rowSubLabel(row)}
+                      selected={row.id === selectedId}
+                      onClick={() => setManualSelectedId(row.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </QueryStateGate>
           </div>
         </div>
 
-        {order ? (
-          <OrderDetail
-            order={order}
-            footerSecondary={footerSecondary}
-            footerPrimary={footerPrimary}
-            footerNote={footerNote}
-            onFooterSecondary={() => setIsModalOpen('Reject')}
-            onFooterPrimary={handleFooterPrimary}
-          />
-        ) : (
-          <div className="flex-1" />
-        )}
+        <div className="flex-1 flex flex-col min-h-0">
+          {selectedId !== null && (
+            <QueryStateGate
+              isPending={orderDetailRes.isPending}
+              isError={orderDetailRes.isError}
+              isOffline={isOrderDetailOffline}
+              length={order ? 1 : 0}
+              errorMessage={orderDetailRes.error?.message}
+              onRetry={() => orderDetailRes.refetch()}
+            >
+              {order && (
+                <OrderDetail
+                  order={order}
+                  footerSecondary={footerSecondary}
+                  footerPrimary={footerPrimary}
+                  footerNote={footerNote}
+                  onFooterSecondary={() => setIsModalOpen('Reject')}
+                  onFooterPrimary={handleFooterPrimary}
+                />
+              )}
+            </QueryStateGate>
+          )}
+        </div>
       </div>
 
       <ApproveModal

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Logo from '../assets/Logo.svg';
 import TextInput from '../components/ui/TextInput';
-import Checkbox from '../components/ui/Checkbox';
 import Button from '../components/ui/Button';
 import { usePostOwnerLogin } from '@renderer/apis/login/mutation';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +10,7 @@ export default function LoginPage() {
   const [account, setAccount] = useState('01032898790');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [keepSignedIn, setKeepSignedIn] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const loginMutation = usePostOwnerLogin();
@@ -22,6 +21,10 @@ export default function LoginPage() {
       {
         onSuccess: () => {
           navigate('/stores');
+        },
+        onError: (error) => {
+          console.log(error);
+          setMessage(error.message);
         }
       }
     );
@@ -56,11 +59,13 @@ export default function LoginPage() {
               </button>
             }
           />
-          <Checkbox checked={keepSignedIn} onChange={setKeepSignedIn} label="로그인 상태 유지" />
         </div>
-        <Button variant="primary" size="md" fullWidth onClick={handleSubmit}>
-          로그인
-        </Button>
+        <div className="flex flex-col gap-1">
+          <Button variant="primary" size="md" fullWidth onClick={handleSubmit}>
+            로그인
+          </Button>
+          {message !== null && <p className="text-red-600 text-[10px]">{message}</p>}
+        </div>
       </div>
     </div>
   );

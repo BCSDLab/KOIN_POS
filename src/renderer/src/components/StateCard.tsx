@@ -3,19 +3,18 @@ import Button from './ui/Button';
 
 interface StateCardProps {
   status: 'empty' | 'loading' | 'error';
+  message?: string;
   onRetry?: () => void;
 }
 
-const shell =
-  'w-95 h-85 bg-white border border-border rounded-2xl shadow-[0_20px_50px_rgba(70,20,100,0.1)]';
-
-export default function StateCard({ status, onRetry }: StateCardProps) {
+export default function StateCard({ status, message, onRetry }: StateCardProps) {
   if (status === 'loading') {
     return (
-      <div className={`${shell} flex flex-col p-5.5 gap-3.5`}>
-        <div className="text-[13px] font-extrabold text-primary-ink">불러오는 중</div>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-17.5 rounded-xl bg-[#F5EEFA] animate-pulse" />
+      <div className="w-full h-full flex flex-col">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-25.5 border-b border-[#F4F0F7] px-4.25 flex items-center">
+            <div className="w-full h-14 rounded-xl bg-[#F5EEFA] animate-pulse" />
+          </div>
         ))}
       </div>
     );
@@ -23,17 +22,13 @@ export default function StateCard({ status, onRetry }: StateCardProps) {
 
   if (status === 'error') {
     return (
-      <div
-        className={`${shell} flex flex-col items-center justify-center gap-3.5 px-10 text-center`}
-      >
+      <div className="w-full h-full flex flex-col items-center justify-center gap-3.5 px-10 text-center">
         <div className="w-14.5 h-14.5 rounded-full bg-primary-subtle text-primary-ink text-2xl font-extrabold flex items-center justify-center">
           !
         </div>
         <div className="text-lg font-bold text-ink">주문을 불러오지 못했습니다</div>
         <div className="text-sm text-text-tertiary leading-relaxed">
-          네트워크 연결을 확인해 주세요.
-          <br />
-          연결되면 자동으로 다시 시도합니다.
+          {message ?? '오류가 발생했습니다.'}
         </div>
         <Button variant="primary" size="sm" onClick={onRetry}>
           다시 시도
@@ -43,7 +38,7 @@ export default function StateCard({ status, onRetry }: StateCardProps) {
   }
 
   return (
-    <div className={`${shell} flex flex-col items-center justify-center gap-3.5 px-10 text-center`}>
+    <div className="w-full h-full flex flex-col items-center justify-center gap-3.5 px-10 text-center">
       <div className="w-14.5 h-14.5 rounded-full bg-[#F7EDFD] flex items-center justify-center">
         <img src={Logo} alt="" className="w-8.5" />
       </div>
