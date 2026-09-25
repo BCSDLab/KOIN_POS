@@ -8,11 +8,7 @@ interface HeaderProps {
   onEndBusiness?: () => void;
 }
 
-export default function Header({
-  storeName = '코인 사장님',
-  onSettings,
-  onEndBusiness
-}: HeaderProps) {
+export default function Header({ storeName = '코인 Pos', onSettings, onEndBusiness }: HeaderProps) {
   return (
     <div className="w-full h-19.5 border-b border-border flex items-center justify-between px-6.5">
       <div className="flex gap-3 items-center">

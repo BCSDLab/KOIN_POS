@@ -4,6 +4,7 @@ import Modal from './ui/Modal';
 import Toggle from './ui/Toggle';
 import Stepper from './ui/Stepper';
 import Button from './ui/Button';
+import { getInitialNumberSetting, getInitialBooleanSetting } from '@renderer/lib/storage';
 
 interface SettingsModalProps {
   open: boolean;
@@ -14,12 +15,18 @@ interface SettingsModalProps {
 export default function SettingsModal({
   open,
   onClose,
-  storeName = '코인 사장님'
+  storeName = '코인 Pos'
 }: SettingsModalProps) {
   const navigate = useNavigate();
-  const [autoPrint, setAutoPrint] = useState(true);
-  const [printCount, setPrintCount] = useState(1);
-  const [soundAlert, setSoundAlert] = useState(true);
+  const [autoPrint, setAutoPrint] = useState(() => {
+    return getInitialBooleanSetting({ key: 'autoPrint', initialValue: true });
+  });
+  const [printCount, setPrintCount] = useState(() => {
+    return getInitialNumberSetting({ key: 'printCount', initialValue: 1 });
+  });
+  const [soundAlert, setSoundAlert] = useState(() => {
+    return getInitialBooleanSetting({ key: 'soundAlert', initialValue: true });
+  });
 
   return (
     <Modal open={open} onClose={onClose} className="w-150 flex flex-col">
@@ -45,11 +52,23 @@ export default function SettingsModal({
                 끄면 상세 화면에서 수동으로 출력합니다
               </div>
             </div>
-            <Toggle checked={autoPrint} onChange={setAutoPrint} />
+            <Toggle
+              checked={autoPrint}
+              onChange={(checked) => {
+                localStorage.setItem('autoPrint', String(checked));
+                setAutoPrint(checked);
+              }}
+            />
           </div>
           <div className="flex items-center justify-between border border-border rounded-xl px-4.5 py-4">
             <div className="text-base font-bold text-ink">출력 매수</div>
-            <Stepper value={printCount} onChange={setPrintCount} />
+            <Stepper
+              value={printCount}
+              onChange={(value) => {
+                localStorage.setItem('printCount', String(value));
+                setPrintCount(value);
+              }}
+            />
           </div>
         </div>
         <div className="flex flex-col gap-3.5">
@@ -61,7 +80,13 @@ export default function SettingsModal({
                 종소리, 주문 수락 전까지 15초마다 반복
               </div>
             </div>
-            <Toggle checked={soundAlert} onChange={setSoundAlert} />
+            <Toggle
+              checked={soundAlert}
+              onChange={(checked) => {
+                localStorage.setItem('soundAlert', String(checked));
+                setSoundAlert(checked);
+              }}
+            />
           </div>
         </div>
         <div className="flex flex-col gap-3.5">
