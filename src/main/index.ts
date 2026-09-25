@@ -22,6 +22,10 @@ function createWindow(): void {
     mainWindow.show();
   });
 
+  ipcMain.handle('get-printers', async () => {
+    return mainWindow.webContents.getPrintersAsync();
+  });
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: 'deny' };
@@ -49,11 +53,6 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
-
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'));
-
-  createWindow();
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './ui/Modal';
 import Toggle from './ui/Toggle';
@@ -27,6 +27,15 @@ export default function SettingsModal({
   const [soundAlert, setSoundAlert] = useState(() => {
     return getInitialBooleanSetting({ key: 'soundAlert', initialValue: true });
   });
+  const [printer, setPrinter] = useState<Electron.PrinterInfo[] | null>(null);
+
+  useEffect(() => {
+    const fetchPrinters = async () => {
+      const currentPrinter = await window.api.getPrinters();
+      setPrinter(currentPrinter);
+    };
+    fetchPrinters();
+  }, []);
 
   return (
     <Modal open={open} onClose={onClose} className="w-150 flex flex-col">
@@ -38,8 +47,14 @@ export default function SettingsModal({
           <div className="text-[15px] font-extrabold text-primary-ink">프린터</div>
           <div className="flex items-center justify-between border border-border rounded-xl px-4.5 py-4">
             <div>
-              <div className="text-base font-bold text-ink">EPSON TM-T88</div>
-              <div className="text-[13px] text-text-tertiary mt-1">USB 연결됨</div>
+              <div className="text-base font-bold text-ink">
+                {printer === null || printer.length === 0
+                  ? '프린터가 연결되지 않았어요'
+                  : `${printer[0].name}`}
+              </div>
+              {printer !== null && printer.length > 0 && (
+                <div className="text-[13px] text-text-tertiary mt-1">{printer[0].description}</div>
+              )}
             </div>
             <Button variant="outline" size="sm" className="h-10 px-4 text-sm">
               테스트 출력
