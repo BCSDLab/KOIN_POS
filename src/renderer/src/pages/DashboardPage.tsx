@@ -169,6 +169,8 @@ export default function DashboardPage() {
   const handleEndBusiness = (): void => {
     patchStoreStatus.mutate({ is_open: false });
     navigate('/stores');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh-token');
   };
 
   return (

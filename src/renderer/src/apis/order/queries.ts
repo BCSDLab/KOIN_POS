@@ -12,7 +12,8 @@ export const useGetOrderList = (orderableShopId: number, status: string) => {
 export const useGetOrderCount = (orderableShopId: number) => {
   return useQuery({
     queryKey: ['owner', 'order', 'count', orderableShopId],
-    queryFn: () => getOrderCounts(orderableShopId)
+    queryFn: () => getOrderCounts(orderableShopId),
+    refetchInterval: 3000
   });
 };
 
