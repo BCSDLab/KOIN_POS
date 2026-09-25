@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
+import { autoUpdater } from 'electron-updater';
 import icon from '../../resources/icon.png?asset';
 
 function createWindow(): void {
@@ -53,6 +54,10 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
+
+  createWindow();
+
+  autoUpdater.checkForUpdatesAndNotify();
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
