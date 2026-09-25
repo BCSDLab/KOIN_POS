@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import Header from '../components/Header';
 import TabBar from '../components/TabBar';
 import SectionHeader from '../components/SectionHeader';
 import OrderListItem from '../components/OrderListItem';
 import OrderDetail from '../components/OrderDetail';
 import QueryStateGate from '../components/QueryStateGate';
-import ApproveModal from '../components/ApproveModal';
-import RejectModal from '../components/RejectModal';
-import SettingsModal from '../components/SettingsModal';
-import EndBusinessModal from '../components/EndBusinessModal';
+import DashboardModals from '../components/DashboardModals';
+import type { ModalType } from '../components/DashboardModals';
+import { SingleNewOrderToast, MultiNewOrderToast } from '../components/NewOrderToast';
 import { useGetOrderCount, useGetOrderDetail, useGetOrderList } from '@renderer/apis/order/queries';
 import { usePatchOrderStatus, usePatchStoreStatus } from '@renderer/apis/order/mutation';
 import { useGetOwnerShops } from '@renderer/apis/store/queries';
@@ -24,8 +24,6 @@ import {
 } from '../lib/dashboard';
 import type { TabKey } from '../lib/dashboard';
 
-type ModalType = 'Approve' | 'Reject' | 'Setting' | 'EndBusiness' | null;
-
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -33,7 +31,7 @@ export default function DashboardPage() {
 
   const [activeTab, setActiveTab] = useState<TabKey>('new');
   const [manualSelectedId, setManualSelectedId] = useState<number | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState<ModalType>(null);
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
 
   const ownerShops = useGetOwnerShops();
   const currentShop = ownerShops.data?.shops.find(
@@ -47,6 +45,59 @@ export default function DashboardPage() {
 
   const countRes = useGetOrderCount(orderableShopId);
   const counts = countRes.data;
+
+  const newOrdersRes = useGetOrderList(orderableShopId, 'NEW');
+  const seenNewOrderIdsRef = useRef<Set<number> | null>(null);
+
+  useEffect(() => {
+    const currentOrders = newOrdersRes.data?.orders ?? [];
+    const currentIds = new Set(currentOrders.map((o) => o.id));
+    const seenIds = seenNewOrderIdsRef.current;
+    seenNewOrderIdsRef.current = currentIds;
+
+    if (seenIds === null) return;
+
+    const arrivedOrders = currentOrders.filter((o) => !seenIds.has(o.id));
+    if (arrivedOrders.length === 0) return;
+
+    const goToNewOrder = (orderId: number): void => {
+      setActiveTab('new');
+      setManualSelectedId(orderId);
+    };
+
+    if (arrivedOrders.length === 1) {
+      const arrivedOrder = arrivedOrders[0];
+      toast.custom(
+        (toastId) => (
+          <SingleNewOrderToast
+            order={arrivedOrder}
+            onView={() => {
+              goToNewOrder(arrivedOrder.id);
+              toast.dismiss(toastId);
+            }}
+            onClose={() => toast.dismiss(toastId)}
+          />
+        ),
+        { duration: Infinity }
+      );
+    } else {
+      const deliveryCount = arrivedOrders.filter((o) => o.order_type === 'DELIVERY').length;
+      toast.custom(
+        (toastId) => (
+          <MultiNewOrderToast
+            count={arrivedOrders.length}
+            deliveryCount={deliveryCount}
+            takeoutCount={arrivedOrders.length - deliveryCount}
+            onView={() => {
+              setActiveTab('new');
+              toast.dismiss(toastId);
+            }}
+          />
+        ),
+        { duration: Infinity }
+      );
+    }
+  }, [newOrdersRes.data]);
 
   const selectedId = manualSelectedId ?? orderList[0]?.id ?? null;
   const orderDetailRes = useGetOrderDetail(orderableShopId, selectedId);
@@ -85,7 +136,7 @@ export default function DashboardPage() {
   const handleFooterPrimary = (): void => {
     if (!order) return;
     if (activeTab === 'new') {
-      setIsModalOpen('Approve');
+      setActiveModal('Approve');
       return;
     }
     const next = nextStatusForTab(activeTab, order.order_type);
@@ -97,12 +148,35 @@ export default function DashboardPage() {
     }
   };
 
+  const handleApprove = (minutes: number): void => {
+    if (!order) return;
+    patchOrderStatus.mutate({
+      orderId: order.id,
+      request: { status: 'COOKING', estimated_minutes: minutes, canceled_reason: null }
+    });
+    setActiveModal(null);
+  };
+
+  const handleReject = (reason: string): void => {
+    if (!order) return;
+    patchOrderStatus.mutate({
+      orderId: order.id,
+      request: { status: 'CANCELED', estimated_minutes: null, canceled_reason: reason }
+    });
+    setActiveModal(null);
+  };
+
+  const handleEndBusiness = (): void => {
+    patchStoreStatus.mutate({ is_open: false });
+    navigate('/stores');
+  };
+
   return (
     <div className="w-full h-screen flex flex-col bg-[#FBFAFC]">
       <Header
         storeName={currentShop?.name}
-        onSettings={() => setIsModalOpen('Setting')}
-        onEndBusiness={() => setIsModalOpen('EndBusiness')}
+        onSettings={() => setActiveModal('Setting')}
+        onEndBusiness={() => setActiveModal('EndBusiness')}
       />
 
       <div className="flex-1 flex min-h-0">
@@ -173,7 +247,7 @@ export default function DashboardPage() {
                   footerSecondary={footerSecondary}
                   footerPrimary={footerPrimary}
                   footerNote={footerNote}
-                  onFooterSecondary={() => setIsModalOpen('Reject')}
+                  onFooterSecondary={() => setActiveModal('Reject')}
                   onFooterPrimary={handleFooterPrimary}
                 />
               )}
@@ -182,42 +256,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <ApproveModal
-        open={isModalOpen === 'Approve'}
-        onClose={() => setIsModalOpen(null)}
-        onApprove={(minutes) => {
-          if (!order) return;
-          patchOrderStatus.mutate({
-            orderId: order.id,
-            request: { status: 'COOKING', estimated_minutes: minutes, canceled_reason: null }
-          });
-          setIsModalOpen(null);
-        }}
-      />
-      <RejectModal
-        open={isModalOpen === 'Reject'}
-        onClose={() => setIsModalOpen(null)}
-        onReject={(reason) => {
-          if (!order) return;
-          patchOrderStatus.mutate({
-            orderId: order.id,
-            request: { status: 'CANCELED', estimated_minutes: null, canceled_reason: reason }
-          });
-          setIsModalOpen(null);
-        }}
-      />
-      <SettingsModal
-        open={isModalOpen === 'Setting'}
-        onClose={() => setIsModalOpen(null)}
+      <DashboardModals
+        activeModal={activeModal}
+        onClose={() => setActiveModal(null)}
         storeName={currentShop?.name}
-      />
-      <EndBusinessModal
-        open={isModalOpen === 'EndBusiness'}
-        onClose={() => setIsModalOpen(null)}
-        onConfirm={() => {
-          patchStoreStatus.mutate({ is_open: false });
-          navigate('/stores');
-        }}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        onEndBusiness={handleEndBusiness}
       />
     </div>
   );
