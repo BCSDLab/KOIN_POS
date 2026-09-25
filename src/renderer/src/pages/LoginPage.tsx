@@ -64,7 +64,7 @@ export default function LoginPage() {
           <Button variant="primary" size="md" fullWidth onClick={handleSubmit}>
             로그인
           </Button>
-          {message !== null && <p className="text-red-600 text-[10px]">{message}</p>}
+          {message !== null && <p className="text-red-600 text-[10px] mt-1">{message}</p>}
         </div>
       </div>
     </div>
