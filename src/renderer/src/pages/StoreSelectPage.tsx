@@ -18,7 +18,11 @@ export default function StoreSelectPage() {
     <div className="w-full h-screen flex items-center justify-center bg-[#FBFAFC] relative">
       <button
         type="button"
-        onClick={() => navigate('/')}
+        onClick={() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh-token');
+          navigate('/');
+        }}
         className="absolute top-5 right-5 h-11 px-4 border border-outline rounded-[10px] bg-white text-text text-base font-bold"
       >
         로그아웃
