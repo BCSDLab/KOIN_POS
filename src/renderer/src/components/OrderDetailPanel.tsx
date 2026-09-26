@@ -16,6 +16,7 @@ interface OrderDetailPanelProps {
   footerNote?: OrderDetailFooterNote;
   onFooterSecondary: () => void;
   onFooterPrimary: () => void;
+  shopName: string;
 }
 
 export default function OrderDetailPanel({
@@ -30,7 +31,8 @@ export default function OrderDetailPanel({
   footerPrimary,
   footerNote,
   onFooterSecondary,
-  onFooterPrimary
+  onFooterPrimary,
+  shopName
 }: OrderDetailPanelProps) {
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -51,6 +53,7 @@ export default function OrderDetailPanel({
               footerNote={footerNote}
               onFooterSecondary={onFooterSecondary}
               onFooterPrimary={onFooterPrimary}
+              shopName={shopName}
             />
           )}
         </QueryStateGate>

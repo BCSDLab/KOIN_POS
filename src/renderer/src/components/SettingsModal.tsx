@@ -5,6 +5,7 @@ import Toggle from './ui/Toggle';
 import Stepper from './ui/Stepper';
 import Button from './ui/Button';
 import { getInitialNumberSetting, getInitialBooleanSetting } from '@renderer/lib/storage';
+import { buildTestReceiptHtml } from '@renderer/lib/receipt';
 
 interface SettingsModalProps {
   open: boolean;
@@ -37,6 +38,12 @@ export default function SettingsModal({
     fetchPrinters();
   }, []);
 
+  const handleTestPrint = async (): Promise<void> => {
+    if (printer === null || printer.length === 0) return;
+    const printerName = printer[0].name;
+    await window.api.printReceipt(buildTestReceiptHtml(printerName), printerName);
+  };
+
   return (
     <Modal open={open} onClose={onClose} className="w-150 flex flex-col">
       <div className="h-15 border-b border-border flex items-center px-6 text-[19px] font-extrabold text-ink flex-none">
@@ -56,7 +63,13 @@ export default function SettingsModal({
                 <div className="text-[13px] text-text-tertiary mt-1">{printer[0].description}</div>
               )}
             </div>
-            <Button variant="outline" size="sm" className="h-10 px-4 text-sm">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 px-4 text-sm"
+              disabled={printer === null || printer.length === 0}
+              onClick={handleTestPrint}
+            >
               테스트 출력
             </Button>
           </div>

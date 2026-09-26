@@ -59,6 +59,23 @@ app.whenReady().then(() => {
 
   autoUpdater.checkForUpdatesAndNotify();
 
+  ipcMain.handle(
+    'print-receipt',
+    async (_event, html: string, printerName?: string): Promise<boolean> => {
+      const printWindow = new BrowserWindow({ show: false });
+      await printWindow.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(html)}`);
+      return new Promise((resolve) => {
+        printWindow.webContents.print(
+          { silent: true, ...(printerName && { deviceName: printerName }) },
+          (success) => {
+            printWindow.close();
+            resolve(success);
+          }
+        );
+      });
+    }
+  );
+
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.

@@ -9,6 +9,9 @@ import { useGetOrderCount, useGetOrderDetail, useGetOrderList } from '@renderer/
 import { usePatchOrderStatus, usePatchStoreStatus } from '@renderer/apis/order/mutation';
 import { useGetOwnerShops } from '@renderer/apis/store/queries';
 import { useNewOrderNotification } from '../hooks/useNewOrderNotification';
+import { getInitialBooleanSetting, getInitialNumberSetting } from '@renderer/lib/storage';
+import { buildReceiptHtml } from '@renderer/lib/receipt';
+import type { OrderDetail } from '@renderer/apis/order/entity';
 import {
   tabs,
   statusKey,
@@ -85,6 +88,19 @@ export default function DashboardPage() {
     dispatchModal({ type: 'REQUEST_APPROVE_CONFIRM', minutes });
   };
 
+  const printOrderReceipts = async (approvedOrder: OrderDetail): Promise<void> => {
+    const autoPrint = getInitialBooleanSetting({ key: 'autoPrint', initialValue: true });
+    if (!autoPrint) return;
+    const printCount = getInitialNumberSetting({ key: 'printCount', initialValue: 1 });
+    const storeName = currentShop?.name ?? '가게';
+    const storeHtml = buildReceiptHtml(approvedOrder, storeName, 'store');
+    const customerHtml = buildReceiptHtml(approvedOrder, storeName, 'customer');
+    for (let i = 0; i < printCount; i++) {
+      await window.api.printReceipt(storeHtml);
+      await window.api.printReceipt(customerHtml);
+    }
+  };
+
   const handleConfirmPendingAction = (): void => {
     if (!order || modalState.modal !== 'Confirm') return;
     const { pendingAction } = modalState;
@@ -98,7 +114,12 @@ export default function DashboardPage() {
             canceled_reason: null
           }
         },
-        { onSuccess: () => dispatchModal({ type: 'CLOSE' }) }
+        {
+          onSuccess: () => {
+            dispatchModal({ type: 'CLOSE' });
+            printOrderReceipts(order);
+          }
+        }
       );
     } else {
       patchOrderStatus.mutate(
@@ -164,6 +185,7 @@ export default function DashboardPage() {
           footerNote={footerNote}
           onFooterSecondary={() => dispatchModal({ type: 'OPEN_REJECT' })}
           onFooterPrimary={handleFooterPrimary}
+          shopName={currentShop?.name ?? '가게'}
         />
       </div>
 

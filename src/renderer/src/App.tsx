@@ -11,7 +11,7 @@ const queryClient = new QueryClient();
 function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster position="top-right" richColors />
+      <Toaster position="top-right" richColors expand visibleToasts={5} gap={12} />
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={<LoginPage />} />

@@ -3,7 +3,9 @@ import { electronAPI } from '@electron-toolkit/preload';
 
 // Custom APIs for renderer
 const api = {
-  getPrinters: () => ipcRenderer.invoke('get-printers')
+  getPrinters: () => ipcRenderer.invoke('get-printers'),
+  printReceipt: (html: string, printerName?: string) =>
+    ipcRenderer.invoke('print-receipt', html, printerName)
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -1,20 +1,11 @@
+import { buildReceiptHtml } from '@renderer/lib/receipt';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import LabelValueRow from './LabelValueRow';
 import FooterBar from './FooterBar';
 import { formatDateTime } from '../lib/format';
-import type { OrderDetail as OrderDetailData, PaymentMethod } from '../apis/order/entity';
-
-const paymentMethodLabel: Record<PaymentMethod, string> = {
-  CARD: '카드',
-  VIRTUAL_ACCOUNT: '가상계좌',
-  EASY_PAY: '간편결제',
-  MOBILE_PHONE: '휴대폰',
-  ACCOUNT_TRANSFER: '계좌이체',
-  CULTURE_GIFT_CERTIFICATE: '문화상품권',
-  BOOK_CULTURE_GIFT_CERTIFICATE: '도서문화상품권',
-  GAME_CULTURE_GIFT_CERTIFICATE: '게임문화상품권'
-};
+import { paymentMethodLabel } from '../lib/paymentMethod';
+import type { OrderDetail as OrderDetailData } from '../apis/order/entity';
 
 export interface OrderDetailFooterNote {
   label: string;
@@ -29,6 +20,7 @@ interface OrderDetailProps {
   footerNote?: OrderDetailFooterNote;
   onFooterSecondary?: () => void;
   onFooterPrimary?: () => void;
+  shopName: string;
 }
 
 export default function OrderDetail({
@@ -37,7 +29,8 @@ export default function OrderDetail({
   footerPrimary,
   footerNote,
   onFooterSecondary,
-  onFooterPrimary
+  onFooterPrimary,
+  shopName
 }: OrderDetailProps) {
   const isRejected = order.order_status === 'CANCELED';
 
@@ -77,6 +70,13 @@ export default function OrderDetail({
     ] as (Row | null)[]
   ).filter(isRow);
 
+  const handlePrint = async (): Promise<void> => {
+    const storeHtml = buildReceiptHtml(order, shopName, 'store');
+    const customerHtml = buildReceiptHtml(order, shopName, 'customer');
+    await window.api.printReceipt(storeHtml);
+    await window.api.printReceipt(customerHtml);
+  };
+
   return (
     <div className="flex-1 flex flex-col min-w-0 min-h-0">
       <div className="flex-1 overflow-y-auto px-8.5 py-6 flex flex-col gap-3.5">
@@ -90,7 +90,12 @@ export default function OrderDetail({
             </div>
           </div>
           {!isRejected && (
-            <Button variant="outline" size="md" className="h-12.5 px-5 text-lg">
+            <Button
+              variant="outline"
+              size="md"
+              className="h-12.5 px-5 text-lg"
+              onClick={handlePrint}
+            >
               주문서 출력
             </Button>
           )}
