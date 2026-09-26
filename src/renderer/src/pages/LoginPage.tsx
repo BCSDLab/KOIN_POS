@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { sha256 } from '@bcsdlab/utils';
 
 export default function LoginPage() {
-  const [account, setAccount] = useState('01032898790');
+  const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export default function LoginPage() {
             type="text"
             value={account}
             onChange={(e) => setAccount(e.target.value)}
-            placeholder="이메일"
+            placeholder="전화번호"
           />
           <TextInput
             type={showPassword ? 'text' : 'password'}
