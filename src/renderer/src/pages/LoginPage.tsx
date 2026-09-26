@@ -23,7 +23,6 @@ export default function LoginPage() {
           navigate('/stores');
         },
         onError: (error) => {
-          console.log(error);
           setMessage(error.message);
         }
       }

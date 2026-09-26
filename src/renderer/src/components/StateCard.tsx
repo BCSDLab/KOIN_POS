@@ -39,8 +39,8 @@ export default function StateCard({ status, message, onRetry }: StateCardProps) 
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-3.5 px-10 text-center">
-      <div className="w-14.5 h-14.5 rounded-full bg-[#F7EDFD] flex items-center justify-center">
-        <img src={Logo} alt="" className="w-8.5" />
+      <div className="size-20 rounded-full bg-[#F7EDFD] flex items-center justify-center">
+        <img src={Logo} alt="" className="w-15 h-13" />
       </div>
       <div className="text-lg font-bold text-ink">대기 중인 주문이 없습니다</div>
       <div className="text-sm text-text-tertiary leading-relaxed">
