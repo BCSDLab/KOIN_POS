@@ -1,26 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useReducer, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 import Header from '../components/Header';
 import TabBar from '../components/TabBar';
-import SectionHeader from '../components/SectionHeader';
-import OrderListItem from '../components/OrderListItem';
-import OrderDetail from '../components/OrderDetail';
-import QueryStateGate from '../components/QueryStateGate';
+import OrderListPanel from '../components/OrderListPanel';
+import OrderDetailPanel from '../components/OrderDetailPanel';
 import DashboardModals from '../components/DashboardModals';
-import type { ModalType } from '../components/DashboardModals';
-import { SingleNewOrderToast, MultiNewOrderToast } from '../components/NewOrderToast';
 import { useGetOrderCount, useGetOrderDetail, useGetOrderList } from '@renderer/apis/order/queries';
 import { usePatchOrderStatus, usePatchStoreStatus } from '@renderer/apis/order/mutation';
 import { useGetOwnerShops } from '@renderer/apis/store/queries';
+import { useNewOrderNotification } from '../hooks/useNewOrderNotification';
 import {
   tabs,
   statusKey,
   countKey,
-  sectionLabel,
-  rowSubLabel,
   nextStatusForTab,
-  footerNoteForOrder
+  footerNoteForOrder,
+  modalReducer
 } from '../lib/dashboard';
 import type { TabKey } from '../lib/dashboard';
 
@@ -31,88 +26,22 @@ export default function DashboardPage() {
 
   const [activeTab, setActiveTab] = useState<TabKey>('new');
   const [manualSelectedId, setManualSelectedId] = useState<number | null>(null);
-  const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [modalState, dispatchModal] = useReducer(modalReducer, { modal: null });
 
   const ownerShops = useGetOwnerShops();
-  const currentShop = ownerShops.data?.shops.find(
-    (shop) => shop.orderable_shop_id === orderableShopId
-  );
   const orderListRes = useGetOrderList(orderableShopId, statusKey[activeTab]);
-  const orderList = orderListRes.data?.orders ?? [];
-  const isOrderListOffline = orderListRes.fetchStatus === 'paused';
-  const deliveryRows = orderList.filter((o) => o.order_type === 'DELIVERY');
-  const takeoutRows = orderList.filter((o) => o.order_type === 'TAKE_OUT');
-
   const countRes = useGetOrderCount(orderableShopId);
-  const counts = countRes.data;
-
-  const newOrdersRes = useGetOrderList(orderableShopId, 'NEW');
-  const seenNewOrderIdsRef = useRef<Set<number> | null>(null);
-
-  useEffect(() => {
-    if (newOrdersRes.data === undefined) return;
-
-    const currentOrders = newOrdersRes.data?.orders ?? [];
-    const currentIds = new Set(currentOrders.map((o) => o.id));
-    const seenIds = seenNewOrderIdsRef.current;
-    seenNewOrderIdsRef.current = currentIds;
-
-    if (seenIds === null) return;
-
-    const arrivedOrders = currentOrders.filter((o) => !seenIds.has(o.id));
-    if (arrivedOrders.length === 0) return;
-
-    const goToNewOrder = (orderId: number): void => {
-      setActiveTab('new');
-      setManualSelectedId(orderId);
-    };
-
-    if (arrivedOrders.length === 1) {
-      const arrivedOrder = arrivedOrders[0];
-      toast.custom(
-        (toastId) => (
-          <SingleNewOrderToast
-            order={arrivedOrder}
-            onView={() => {
-              goToNewOrder(arrivedOrder.id);
-              toast.dismiss(toastId);
-            }}
-            onClose={() => toast.dismiss(toastId)}
-          />
-        ),
-        { duration: Infinity }
-      );
-    } else {
-      const deliveryCount = arrivedOrders.filter((o) => o.order_type === 'DELIVERY').length;
-      toast.custom(
-        (toastId) => (
-          <MultiNewOrderToast
-            count={arrivedOrders.length}
-            deliveryCount={deliveryCount}
-            takeoutCount={arrivedOrders.length - deliveryCount}
-            onView={() => {
-              setActiveTab('new');
-              toast.dismiss(toastId);
-            }}
-          />
-        ),
-        { duration: Infinity }
-      );
-    }
-  }, [newOrdersRes.data]);
-
-  const selectedId = manualSelectedId ?? orderList[0]?.id ?? null;
+  const selectedId = manualSelectedId ?? orderListRes.data?.orders[0]?.id ?? null;
   const orderDetailRes = useGetOrderDetail(orderableShopId, selectedId);
-  const order = orderDetailRes.data;
-  const isOrderDetailOffline = orderDetailRes.fetchStatus === 'paused';
-
   const patchOrderStatus = usePatchOrderStatus(orderableShopId);
   const patchStoreStatus = usePatchStoreStatus(orderableShopId);
 
-  const handleTabChange = (key: string): void => {
-    setActiveTab(key as TabKey);
-    setManualSelectedId(null);
-  };
+  const currentShop = ownerShops.data?.shops.find(
+    (shop) => shop.orderable_shop_id === orderableShopId
+  );
+  const counts = countRes.data;
+  const order = orderDetailRes.data;
+  const isOrderDetailOffline = orderDetailRes.fetchStatus === 'paused';
 
   const tabsWithCount = tabs.map((tab) => ({
     ...tab,
@@ -135,28 +64,51 @@ export default function DashboardPage() {
         : '포장 수령 완료'
       : footerPrimaryLabel[activeTab];
 
+  const handleTabChange = (key: string): void => {
+    setActiveTab(key as TabKey);
+    setManualSelectedId(null);
+  };
+
   const handleFooterPrimary = (): void => {
     if (!order) return;
     if (activeTab === 'new') {
-      setActiveModal('Approve');
+      dispatchModal({ type: 'OPEN_APPROVE' });
       return;
     }
     const next = nextStatusForTab(activeTab, order.order_type);
     if (next) {
-      patchOrderStatus.mutate({
-        orderId: order.id,
-        request: { status: next, estimated_minutes: null, canceled_reason: null }
-      });
+      dispatchModal({ type: 'REQUEST_NEXT_STATUS_CONFIRM', status: next });
     }
   };
 
-  const handleApprove = (minutes: number): void => {
-    if (!order) return;
-    patchOrderStatus.mutate({
-      orderId: order.id,
-      request: { status: 'COOKING', estimated_minutes: minutes, canceled_reason: null }
-    });
-    setActiveModal(null);
+  const handleApproveMinutesSelected = (minutes: number): void => {
+    dispatchModal({ type: 'REQUEST_APPROVE_CONFIRM', minutes });
+  };
+
+  const handleConfirmPendingAction = (): void => {
+    if (!order || modalState.modal !== 'Confirm') return;
+    const { pendingAction } = modalState;
+    if (pendingAction.type === 'approve') {
+      patchOrderStatus.mutate(
+        {
+          orderId: order.id,
+          request: {
+            status: 'COOKING',
+            estimated_minutes: pendingAction.minutes,
+            canceled_reason: null
+          }
+        },
+        { onSuccess: () => dispatchModal({ type: 'CLOSE' }) }
+      );
+    } else {
+      patchOrderStatus.mutate(
+        {
+          orderId: order.id,
+          request: { status: pendingAction.status, estimated_minutes: null, canceled_reason: null }
+        },
+        { onSuccess: () => dispatchModal({ type: 'CLOSE' }) }
+      );
+    }
   };
 
   const handleReject = (reason: string): void => {
@@ -165,7 +117,7 @@ export default function DashboardPage() {
       orderId: order.id,
       request: { status: 'CANCELED', estimated_minutes: null, canceled_reason: reason }
     });
-    setActiveModal(null);
+    dispatchModal({ type: 'CLOSE' });
   };
 
   const handleEndBusiness = (): void => {
@@ -173,98 +125,58 @@ export default function DashboardPage() {
     navigate('/stores');
   };
 
+  useNewOrderNotification(orderableShopId, (orderId) => {
+    setActiveTab('new');
+    if (orderId !== undefined) setManualSelectedId(orderId);
+  });
+
   return (
     <div className="w-full h-screen flex flex-col bg-[#FBFAFC]">
       <Header
         storeName={currentShop?.name}
-        onSettings={() => setActiveModal('Setting')}
-        onEndBusiness={() => setActiveModal('EndBusiness')}
+        onSettings={() => dispatchModal({ type: 'OPEN_SETTING' })}
+        onEndBusiness={() => dispatchModal({ type: 'OPEN_END_BUSINESS' })}
       />
 
       <div className="flex-1 flex min-h-0">
         <div className="w-117.5 bg-white border-r border-border flex flex-col min-h-0 flex-none">
           <TabBar tabs={tabsWithCount} activeKey={activeTab} onChange={handleTabChange} />
           <div className="flex-1 overflow-y-auto">
-            <QueryStateGate
-              isPending={orderListRes.isPending}
-              isError={orderListRes.isError}
-              isOffline={isOrderListOffline}
-              length={orderList.length}
-              errorMessage={orderListRes.error?.message}
-              onRetry={() => orderListRes.refetch()}
-            >
-              {deliveryRows.length > 0 && (
-                <div>
-                  <SectionHeader
-                    label={sectionLabel(activeTab, 'DELIVERY')}
-                    count={deliveryRows.length}
-                  />
-                  {deliveryRows.map((row) => (
-                    <OrderListItem
-                      key={row.id}
-                      no={row.order_number}
-                      type={row.order_type === 'DELIVERY' ? '배달' : '포장'}
-                      sub={rowSubLabel(row)}
-                      selected={row.id === selectedId}
-                      onClick={() => setManualSelectedId(row.id)}
-                    />
-                  ))}
-                </div>
-              )}
-              {takeoutRows.length > 0 && (
-                <div>
-                  <SectionHeader
-                    label={sectionLabel(activeTab, 'TAKE_OUT')}
-                    count={takeoutRows.length}
-                  />
-                  {takeoutRows.map((row) => (
-                    <OrderListItem
-                      key={row.id}
-                      no={row.order_number}
-                      type={row.order_type === 'DELIVERY' ? '배달' : '포장'}
-                      sub={rowSubLabel(row)}
-                      selected={row.id === selectedId}
-                      onClick={() => setManualSelectedId(row.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </QueryStateGate>
+            <OrderListPanel
+              orderableShopId={orderableShopId}
+              activeTab={activeTab}
+              selectedId={selectedId}
+              onSelect={setManualSelectedId}
+            />
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col min-h-0">
-          {selectedId !== null && (
-            <QueryStateGate
-              isPending={orderDetailRes.isPending}
-              isError={orderDetailRes.isError}
-              isOffline={isOrderDetailOffline}
-              length={order ? 1 : 0}
-              errorMessage={orderDetailRes.error?.message}
-              onRetry={() => orderDetailRes.refetch()}
-            >
-              {order && (
-                <OrderDetail
-                  order={order}
-                  footerSecondary={footerSecondary}
-                  footerPrimary={footerPrimary}
-                  footerNote={footerNote}
-                  onFooterSecondary={() => setActiveModal('Reject')}
-                  onFooterPrimary={handleFooterPrimary}
-                />
-              )}
-            </QueryStateGate>
-          )}
-        </div>
+        <OrderDetailPanel
+          selectedId={selectedId}
+          isPending={orderDetailRes.isPending}
+          isError={orderDetailRes.isError}
+          isOffline={isOrderDetailOffline}
+          errorMessage={orderDetailRes.error?.message}
+          onRetry={() => orderDetailRes.refetch()}
+          order={order}
+          footerSecondary={footerSecondary}
+          footerPrimary={footerPrimary}
+          footerNote={footerNote}
+          onFooterSecondary={() => dispatchModal({ type: 'OPEN_REJECT' })}
+          onFooterPrimary={handleFooterPrimary}
+        />
       </div>
 
       <DashboardModals
-        activeModal={activeModal}
-        onClose={() => setActiveModal(null)}
+        activeModal={modalState.modal}
+        onClose={() => dispatchModal({ type: 'CLOSE' })}
         storeName={currentShop?.name}
-        onApprove={handleApprove}
+        onApproveMinutesSelected={handleApproveMinutesSelected}
         onReject={handleReject}
         onEndBusiness={handleEndBusiness}
+        confirmMessage={`${footerPrimary ?? '이 작업을'} 처리하시겠습니까?`}
+        onConfirm={handleConfirmPendingAction}
+        isConfirmPending={patchOrderStatus.isPending}
       />
     </div>
   );

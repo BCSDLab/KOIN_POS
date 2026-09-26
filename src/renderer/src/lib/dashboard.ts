@@ -60,3 +60,42 @@ export function footerNoteForOrder(order: OrderDetail): {
     tone: 'success'
   };
 }
+
+export type PendingAction =
+  { type: 'approve'; minutes: number } | { type: 'nextStatus'; status: ORDER_STATUS };
+
+export type ModalState =
+  | { modal: null }
+  | { modal: 'Approve' }
+  | { modal: 'Reject' }
+  | { modal: 'Setting' }
+  | { modal: 'EndBusiness' }
+  | { modal: 'Confirm'; pendingAction: PendingAction };
+
+export type ModalAction =
+  | { type: 'OPEN_APPROVE' }
+  | { type: 'OPEN_REJECT' }
+  | { type: 'OPEN_SETTING' }
+  | { type: 'OPEN_END_BUSINESS' }
+  | { type: 'REQUEST_APPROVE_CONFIRM'; minutes: number }
+  | { type: 'REQUEST_NEXT_STATUS_CONFIRM'; status: ORDER_STATUS }
+  | { type: 'CLOSE' };
+
+export function modalReducer(_state: ModalState, action: ModalAction): ModalState {
+  switch (action.type) {
+    case 'OPEN_APPROVE':
+      return { modal: 'Approve' };
+    case 'OPEN_REJECT':
+      return { modal: 'Reject' };
+    case 'OPEN_SETTING':
+      return { modal: 'Setting' };
+    case 'OPEN_END_BUSINESS':
+      return { modal: 'EndBusiness' };
+    case 'REQUEST_APPROVE_CONFIRM':
+      return { modal: 'Confirm', pendingAction: { type: 'approve', minutes: action.minutes } };
+    case 'REQUEST_NEXT_STATUS_CONFIRM':
+      return { modal: 'Confirm', pendingAction: { type: 'nextStatus', status: action.status } };
+    case 'CLOSE':
+      return { modal: null };
+  }
+}

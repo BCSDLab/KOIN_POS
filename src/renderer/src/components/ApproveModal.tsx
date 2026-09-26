@@ -7,10 +7,10 @@ const presets = [10, 15, 20, 25, 30, 40, 45, 60];
 interface ApproveModalProps {
   open: boolean;
   onClose: () => void;
-  onApprove: (minutes: number) => void;
+  onConfirm: (minutes: number) => void;
 }
 
-export default function ApproveModal({ open, onClose, onApprove }: ApproveModalProps) {
+export default function ApproveModal({ open, onClose, onConfirm }: ApproveModalProps) {
   const [minutes, setMinutes] = useState(20);
 
   return (
@@ -43,7 +43,7 @@ export default function ApproveModal({ open, onClose, onApprove }: ApproveModalP
           취소
         </Button>
         <div className="flex-1">
-          <Button variant="primary" size="md" fullWidth onClick={() => onApprove(minutes)}>
+          <Button variant="primary" size="md" fullWidth onClick={() => onConfirm(minutes)}>
             승인하기
           </Button>
         </div>

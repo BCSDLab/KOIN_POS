@@ -16,7 +16,7 @@ const paymentMethodLabel: Record<PaymentMethod, string> = {
   GAME_CULTURE_GIFT_CERTIFICATE: '게임문화상품권'
 };
 
-interface OrderDetailFooterNote {
+export interface OrderDetailFooterNote {
   label: string;
   icon: string;
   tone: 'success' | 'muted';
@@ -40,6 +40,42 @@ export default function OrderDetail({
   onFooterPrimary
 }: OrderDetailProps) {
   const isRejected = order.order_status === 'CANCELED';
+
+  type Row = { label: string; value: React.ReactNode };
+  const isRow = (row: Row | null): row is Row => row !== null;
+
+  const receiverRows = (
+    [
+      { label: '주문 유형', value: order.order_type === 'DELIVERY' ? '배달' : '포장' },
+      { label: '수저 제공', value: order.receiver.provide_cutlery ? 'Y' : 'N' },
+      { label: '받는사람', value: order.receiver.name },
+      { label: '연락처', value: order.receiver.phone_number },
+      { label: '받는주소', value: `${order.receiver.address} ${order.receiver.address_detail}` },
+      { label: '사장님에게', value: order.receiver.to_owner },
+      order.order_type === 'DELIVERY'
+        ? { label: '배달기사님에게', value: order.receiver.to_rider }
+        : null
+    ] as (Row | null)[]
+  ).filter(isRow);
+
+  const paymentRows = (
+    [
+      {
+        label: '결제수단',
+        value: paymentMethodLabel[order.payment.method] ?? order.payment.method
+      },
+      { label: '결제 일시', value: formatDateTime(order.payment.approved_at) },
+      isRejected
+        ? null
+        : { label: '상품 금액', value: `${order.payment.total_product_price.toLocaleString()}원` },
+      isRejected || order.payment.delivery_tip <= 0
+        ? null
+        : { label: '배달비', value: `${order.payment.delivery_tip.toLocaleString()}원` },
+      isRejected || order.payment.discount_amount <= 0
+        ? null
+        : { label: '할인 금액', value: `-${order.payment.discount_amount.toLocaleString()}원` }
+    ] as (Row | null)[]
+  ).filter(isRow);
 
   return (
     <div className="flex-1 flex flex-col min-w-0 min-h-0">
@@ -90,48 +126,20 @@ export default function OrderDetail({
 
         <Card>
           <div className="text-[15px] font-extrabold text-primary-ink">받는사람 정보</div>
-          <LabelValueRow label="주문 유형">
-            {order.order_type === 'DELIVERY' ? '배달' : '포장'}
-          </LabelValueRow>
-          <LabelValueRow label="수저 제공">
-            {order.receiver.provide_cutlery ? 'Y' : 'N'}
-          </LabelValueRow>
-          <LabelValueRow label="받는사람">{order.receiver.name}</LabelValueRow>
-          <LabelValueRow label="연락처">{order.receiver.phone_number}</LabelValueRow>
-          <LabelValueRow label="받는주소">
-            {order.receiver.address} {order.receiver.address_detail}
-          </LabelValueRow>
-          <LabelValueRow label="사장님에게">{order.receiver.to_owner}</LabelValueRow>
-          {order.order_type === 'DELIVERY' && (
-            <LabelValueRow label="배달기사님에게">{order.receiver.to_rider}</LabelValueRow>
-          )}
+          {receiverRows.map((row) => (
+            <LabelValueRow key={row.label} label={row.label}>
+              {row.value}
+            </LabelValueRow>
+          ))}
         </Card>
 
         <Card>
           <div className="text-[15px] font-extrabold text-primary-ink">결제 정보</div>
-          <LabelValueRow label="결제수단">
-            {paymentMethodLabel[order.payment.method] ?? order.payment.method}
-          </LabelValueRow>
-          <LabelValueRow label="결제 일시">
-            {formatDateTime(order.payment.approved_at)}
-          </LabelValueRow>
-          {!isRejected && (
-            <>
-              <LabelValueRow label="상품 금액">
-                {order.payment.total_product_price.toLocaleString()}원
-              </LabelValueRow>
-              {order.payment.delivery_tip > 0 && (
-                <LabelValueRow label="배달비">
-                  {order.payment.delivery_tip.toLocaleString()}원
-                </LabelValueRow>
-              )}
-              {order.payment.discount_amount > 0 && (
-                <LabelValueRow label="할인 금액">
-                  -{order.payment.discount_amount.toLocaleString()}원
-                </LabelValueRow>
-              )}
-            </>
-          )}
+          {paymentRows.map((row) => (
+            <LabelValueRow key={row.label} label={row.label}>
+              {row.value}
+            </LabelValueRow>
+          ))}
           <div className="h-px bg-[#F4F0F7]" />
           <div className="flex items-baseline">
             <div className="w-39.5 flex-none text-lg font-bold text-ink">
