@@ -1,7 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useGetOrderList } from '@renderer/apis/order/queries';
+import { getInitialBooleanSetting } from '@renderer/lib/storage';
 import { SingleNewOrderToast, MultiNewOrderToast } from '../components/NewOrderToast';
+import notificationSound from '../assets/notification.mp3';
+
+function playAlertSound(): void {
+  if (!getInitialBooleanSetting({ key: 'soundAlert', initialValue: true })) return;
+  new Audio(notificationSound).play();
+  setTimeout(() => new Audio(notificationSound).play(), 2000);
+}
 
 export function useNewOrderNotification(
   orderableShopId: number,
@@ -22,6 +30,8 @@ export function useNewOrderNotification(
 
     const arrivedOrders = currentOrders.filter((o) => !seenIds.has(o.id));
     if (arrivedOrders.length === 0) return;
+
+    playAlertSound();
 
     if (arrivedOrders.length === 1) {
       const arrivedOrder = arrivedOrders[0];

@@ -105,7 +105,7 @@ export default function SettingsModal({
             <div>
               <div className="text-base font-bold text-ink">알림음</div>
               <div className="text-[13px] text-text-tertiary mt-1">
-                종소리, 주문 수락 전까지 15초마다 반복
+                종소리, 새로운 주문시 2번 반복
               </div>
             </div>
             <Toggle
