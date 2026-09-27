@@ -29,6 +29,7 @@ src/
           client.ts    # raw fetch 함수
           queries.ts   # useQuery 훅
           mutation.ts  # useMutation 훅
+      hooks/      #toast 알림 훅
       lib/         # 순수 유틸/도메인 로직
       styles/      # 전역 CSS, 디자인 토큰
       assets/      # 이미지 등 정적 리소스
