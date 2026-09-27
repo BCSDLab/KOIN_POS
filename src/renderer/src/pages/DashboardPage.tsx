@@ -93,11 +93,9 @@ export default function DashboardPage() {
     if (!autoPrint) return;
     const printCount = getInitialNumberSetting({ key: 'printCount', initialValue: 1 });
     const storeName = currentShop?.name ?? '가게';
-    const storeHtml = buildReceiptHtml(approvedOrder, storeName, 'store');
-    const customerHtml = buildReceiptHtml(approvedOrder, storeName, 'customer');
+    const receiptHtml = buildReceiptHtml(approvedOrder, storeName);
     for (let i = 0; i < printCount; i++) {
-      await window.api.printReceipt(storeHtml);
-      await window.api.printReceipt(customerHtml);
+      await window.api.printReceipt(receiptHtml);
     }
   };
 

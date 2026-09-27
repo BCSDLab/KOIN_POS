@@ -71,10 +71,7 @@ export default function OrderDetail({
   ).filter(isRow);
 
   const handlePrint = async (): Promise<void> => {
-    const storeHtml = buildReceiptHtml(order, shopName, 'store');
-    const customerHtml = buildReceiptHtml(order, shopName, 'customer');
-    await window.api.printReceipt(storeHtml);
-    await window.api.printReceipt(customerHtml);
+    await window.api.printReceipt(buildReceiptHtml(order, shopName));
   };
 
   return (
