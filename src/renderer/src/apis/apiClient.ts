@@ -22,6 +22,26 @@ export class NetworkError extends Error {
   }
 }
 
+let tokenCache: { token: string; refreshToken: string } | null = null;
+
+export const setTokens = (token: string, refreshToken: string): void => {
+  tokenCache = { token, refreshToken };
+  window.api
+    .setTokens(token, refreshToken)
+    .catch((error: unknown) => console.error('토큰 저장에 실패했습니다.', error));
+};
+
+export const clearTokens = (): void => {
+  tokenCache = null;
+  window.api
+    .clearTokens()
+    .catch((error: unknown) => console.error('토큰 삭제에 실패했습니다.', error));
+};
+
+export const hydrateTokens = (token: string, refreshToken: string): void => {
+  tokenCache = { token, refreshToken };
+};
+
 const buildUrl = (url: string, params?: Record<string, string>): URL => {
   const urlObj = new URL(baseUrl + url);
   urlObj.search = new URLSearchParams(params).toString();
@@ -29,7 +49,7 @@ const buildUrl = (url: string, params?: Record<string, string>): URL => {
 };
 
 const refreshToken = async (): Promise<boolean> => {
-  const refresh_token = localStorage.getItem('refresh-token');
+  const refresh_token = tokenCache?.refreshToken;
   if (!refresh_token) return false;
 
   const res = await fetch(new URL(baseUrl + '/user/refresh'), {
@@ -40,8 +60,7 @@ const refreshToken = async (): Promise<boolean> => {
   if (!res.ok) return false;
 
   const data = await res.json();
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('refresh-token', data.refresh_token);
+  setTokens(data.token, data.refresh_token);
   return true;
 };
 
@@ -75,7 +94,7 @@ const request = async (
 ): Promise<Response> => {
   const headers: Record<string, string> = {
     ...(option?.authorization && {
-      Authorization: `Bearer ${localStorage.getItem('token')}`
+      Authorization: `Bearer ${tokenCache?.token}`
     }),
     ...(body !== undefined && { 'Content-Type': 'application/json' })
   };
@@ -85,13 +104,12 @@ const request = async (
   if (res.status === 401 && option?.authorization) {
     const refreshed = await refreshToken();
     if (refreshed) {
-      const retryHeaders = { ...headers, Authorization: `Bearer ${localStorage.getItem('token')}` };
+      const retryHeaders = { ...headers, Authorization: `Bearer ${tokenCache?.token}` };
       const retryRes = await doFetch(method, urlObj, retryHeaders, body);
       if (!retryRes.ok) return throwApiError(retryRes);
       return retryRes;
     }
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh-token');
+    clearTokens();
     window.location.hash = '#/';
     throw new ApiError(401, '로그인이 만료되었습니다. 다시 로그인해주세요.');
   }

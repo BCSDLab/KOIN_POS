@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import { useGetOwnerShops } from '@renderer/apis/store/queries';
 import { usePatchStoreStatus } from '@renderer/apis/order/mutation';
+import { clearTokens } from '@renderer/apis/apiClient';
 
 export default function StoreSelectPage() {
   const res = useGetOwnerShops();
@@ -19,8 +20,7 @@ export default function StoreSelectPage() {
       <button
         type="button"
         onClick={() => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('refresh-token');
+          clearTokens();
           navigate('/');
         }}
         className="absolute top-5 right-5 h-11 px-4 border border-outline rounded-[10px] bg-white text-text text-base font-bold"

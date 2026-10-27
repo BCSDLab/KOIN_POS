@@ -1,12 +1,21 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import StoreSelectPage from './pages/StoreSelectPage';
 import DashboardPage from './pages/DashboardPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { useSessionRestore } from './hooks/useSessionRestore';
 
 const queryClient = new QueryClient();
+
+function RootRoute(): React.JSX.Element | null {
+  const sessionStatus = useSessionRestore();
+
+  if (sessionStatus === 'loading') return null;
+  if (sessionStatus === 'authenticated') return <Navigate to="/stores" replace />;
+  return <LoginPage />;
+}
 
 function App(): React.JSX.Element {
   return (
@@ -14,7 +23,7 @@ function App(): React.JSX.Element {
       <Toaster position="top-right" richColors expand visibleToasts={5} gap={12} />
       <ErrorBoundary>
         <Routes>
-          <Route path="/" element={<LoginPage />} />
+          <Route path="/" element={<RootRoute />} />
           <Route path="/stores" element={<StoreSelectPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>

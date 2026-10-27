@@ -3,6 +3,7 @@ import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import { autoUpdater } from 'electron-updater';
 import icon from '../../resources/icon.png?asset';
+import { deleteTokens, readTokens, writeTokens } from './tokenStore';
 
 function createWindow(): void {
   // Create the browser window.
@@ -58,6 +59,14 @@ app.whenReady().then(() => {
   createWindow();
 
   autoUpdater.checkForUpdatesAndNotify();
+
+  ipcMain.handle('auth:get-tokens', () => readTokens());
+  ipcMain.handle('auth:set-tokens', (_event, token: string, refreshToken: string) => {
+    writeTokens(token, refreshToken);
+  });
+  ipcMain.handle('auth:clear-tokens', () => {
+    deleteTokens();
+  });
 
   ipcMain.handle(
     'print-receipt',

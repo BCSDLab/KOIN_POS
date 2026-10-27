@@ -5,7 +5,11 @@ import { electronAPI } from '@electron-toolkit/preload';
 const api = {
   getPrinters: () => ipcRenderer.invoke('get-printers'),
   printReceipt: (html: string, printerName?: string) =>
-    ipcRenderer.invoke('print-receipt', html, printerName)
+    ipcRenderer.invoke('print-receipt', html, printerName),
+  getTokens: () => ipcRenderer.invoke('auth:get-tokens'),
+  setTokens: (token: string, refreshToken: string) =>
+    ipcRenderer.invoke('auth:set-tokens', token, refreshToken),
+  clearTokens: () => ipcRenderer.invoke('auth:clear-tokens')
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to
