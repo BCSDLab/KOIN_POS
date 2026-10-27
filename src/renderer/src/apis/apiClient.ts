@@ -48,20 +48,34 @@ const buildUrl = (url: string, params?: Record<string, string>): URL => {
   return urlObj;
 };
 
-const refreshToken = async (): Promise<boolean> => {
-  const refresh_token = tokenCache?.refreshToken;
-  if (!refresh_token) return false;
+let refreshPromise: Promise<boolean> | null = null;
 
-  const res = await fetch(new URL(baseUrl + '/user/refresh'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token })
+const refreshToken = (): Promise<boolean> => {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const refresh_token = tokenCache?.refreshToken;
+    if (!refresh_token) return false;
+
+    try {
+      const res = await fetch(new URL(baseUrl + '/user/refresh'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token })
+      });
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      setTokens(data.token, data.refresh_token);
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  return refreshPromise.finally(() => {
+    refreshPromise = null;
   });
-  if (!res.ok) return false;
-
-  const data = await res.json();
-  setTokens(data.token, data.refresh_token);
-  return true;
 };
 
 const doFetch = async (

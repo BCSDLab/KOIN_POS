@@ -9,21 +9,22 @@ import { useSessionRestore } from './hooks/useSessionRestore';
 
 const queryClient = new QueryClient();
 
-function RootRoute(): React.JSX.Element | null {
+function App(): React.JSX.Element | null {
   const sessionStatus = useSessionRestore();
 
   if (sessionStatus === 'loading') return null;
-  if (sessionStatus === 'authenticated') return <Navigate to="/stores" replace />;
-  return <LoginPage />;
-}
 
-function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster position="top-right" richColors expand visibleToasts={5} gap={12} />
       <ErrorBoundary>
         <Routes>
-          <Route path="/" element={<RootRoute />} />
+          <Route
+            path="/"
+            element={
+              sessionStatus === 'authenticated' ? <Navigate to="/stores" replace /> : <LoginPage />
+            }
+          />
           <Route path="/stores" element={<StoreSelectPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>

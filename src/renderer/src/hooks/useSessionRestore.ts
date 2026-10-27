@@ -4,9 +4,11 @@ import { hydrateTokens } from '../apis/apiClient';
 export type SessionStatus = 'loading' | 'authenticated' | 'none';
 
 export function useSessionRestore(): SessionStatus {
-  const [status, setStatus] = useState<SessionStatus>('loading');
+  const [status, setStatus] = useState<SessionStatus>(() => (window.api ? 'loading' : 'none'));
 
   useEffect(() => {
+    if (!window.api) return;
+
     window.api
       .getTokens()
       .then((tokens) => {
